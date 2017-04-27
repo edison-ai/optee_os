@@ -14,4 +14,8 @@
 #include <limits.h>
 #include <stddef.h>
 
+#if defined(_CFG_CRYPTO_WITH_HASH)
+#include "mbedtls_hash.h"
+#endif
+
 #endif /* LIBMBEDTLS_H */
