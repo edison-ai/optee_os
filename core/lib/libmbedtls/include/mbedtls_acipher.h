@@ -28,4 +28,10 @@
 #include "mbedtls/dhm.h"
 #endif
 
+#if defined(CFG_CRYPTO_ECC)
+#include "mbedtls/ecdsa.h"
+#include "mbedtls/ecp.h"
+#include "mbedtls/ecdh.h"
+#endif
+
 #endif /* MBEDTLS_ACIPHER_H */
