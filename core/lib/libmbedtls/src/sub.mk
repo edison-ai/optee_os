@@ -59,3 +59,5 @@ srcs-$(CFG_CRYPTO_RSA) += mbedtls/library/rsa.c
 srcs-$(CFG_CRYPTO_ECC) += mbedtls/library/ecp_curves.c
 srcs-$(CFG_CRYPTO_ECC) += mbedtls/library/ecp.c
 srcs-$(CFG_CRYPTO_ECC) += mbedtls/library/ecdsa.c
+# DH
+srcs-$(CFG_CRYPTO_DH) += mbedtls/library/dhm.c

@@ -24,4 +24,8 @@
 #include "mbedtls/pk_internal.h"
 #endif
 
+#if defined(CFG_CRYPTO_DH)
+#include "mbedtls/dhm.h"
+#endif
+
 #endif /* MBEDTLS_ACIPHER_H */
