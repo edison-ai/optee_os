@@ -30,4 +30,8 @@
 #include "mbedtls_mac.h"
 #endif
 
+#if defined(_CFG_CRYPTO_WITH_ACIPHER)
+#include "mbedtls_acipher.h"
+#endif
+
 #endif /* LIBMBEDTLS_H */

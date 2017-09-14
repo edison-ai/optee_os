@@ -29,6 +29,8 @@ srcs-$(_CFG_CRYPTO_WITH_CIPHER) += mbedtls/library/cipher.c \
 			mbedtls/library/cipher_wrap.c
 
 #MAC
+srcs-$(CFG_CRYPTO_HMAC) += mbedtls/library/md.c \
+                         mbedtls/library/md_wrap.c
 srcs-$(CFG_CRYPTO_CMAC) += mbedtls/library/cmac.c
 
 # DRBG
@@ -43,6 +45,5 @@ srcs-y += mbedtls/library/aes.c
 endif
 endif
 
-# MAC
-srcs-$(CFG_CRYPTO_HMAC) += mbedtls/library/md.c \
-                         mbedtls/library/md_wrap.c
+# Asymmetric ciphers
+srcs-$(_CFG_CRYPTO_WITH_ACIPHER) += mbedtls/library/bignum.c
