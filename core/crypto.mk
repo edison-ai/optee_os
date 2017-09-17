@@ -39,6 +39,9 @@ CFG_CRYPTO_GCM ?= y
 # Default uses the OP-TEE internal AES-GCM implementation
 CFG_CRYPTO_AES_GCM_FROM_CRYPTOLIB ?= n
 
+# Random bit generator
+CFG_CRYPTO_CTR_DRBG ?= y
+CFG_CRYPTO_HMAC_DRBG ?= n
 endif
 
 ifeq ($(CFG_WITH_PAGER),y)
@@ -48,6 +51,26 @@ CFG_CRYPTO_SHA256:=y
 endif
 endif
 
+ifeq ($(CFG_CRYPTO_CTR_DRBG),n)
+ifeq ($(CFG_CRYPTO_HMAC_DRBG),n)
+$(warning Warning: One kind DRBG must be enabled [default is CRT_DRBG])
+CFG_CRYPTO_CTR_DRBG:=y
+endif
+endif
+
+ifeq ($(CFG_CRYPTO_CTR_DRBG),y)
+ifneq ($(CFG_CRYPTO_CTR),y)
+$(warning Warning: Enabling CFG_CRYPTO_CTR [required by CFG_CRYPTO_CTR_DRBG])
+CFG_CRYPTO_CTR:=y
+endif
+endif
+
+ifeq ($(CFG_CRYPTO_HMAC_DRBG),y)
+ifneq ($(CFG_CRYPTO_HMAC),y)
+$(warning Warning: Enabling CFG_CRYPTO_HMAC [required by CFG_CRYPTO_HMAC_DRBG])
+CFG_CRYPTO_HMAC:=y
+endif
+endif
 ifeq ($(CFG_CRYPTO_WITH_CE),y)
 
 $(call force,CFG_AES_GCM_TABLE_BASED,n,conflicts with CFG_CRYPTO_WITH_CE)
@@ -136,3 +159,4 @@ _CFG_CRYPTO_WITH_MAC := $(call cryp-one-enabled, HMAC CMAC CBC_MAC)
 _CFG_CRYPTO_WITH_CBC := $(call cryp-one-enabled, CBC CBC_MAC)
 _CFG_CRYPTO_WITH_ASN1 := $(call cryp-one-enabled, RSA DSA ECC)
 _CFG_CRYPTO_WITH_FORTUNA_PRNG := $(call cryp-all-enabled, AES SHA256)
+_CFG_CRYPTO_WITH_DRBG := $(call cryp-one-enabled, CTR_DRBG HMAC_DRBG)

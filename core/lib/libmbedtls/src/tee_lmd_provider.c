@@ -16,6 +16,40 @@
 #include <tee/tee_cryp_utl.h>
 #include <utee_defines.h>
 
+#if defined(_CFG_CRYPTO_WITH_ACIPHER) || defined(_CFG_CRYPTO_WITH_DRBG)
+static unsigned long int next = 1;
+
+/* Return next random integer */
+static int _rand(void)
+{
+	next = next * 1103515245L + 12345;
+	return (unsigned int) (next / 65536L) % 32768L;
+}
+
+static int mbd_rand(void *rng_state, unsigned char *output, size_t len)
+{
+	size_t use_len;
+	int rnd;
+
+	if (rng_state != NULL)
+		rng_state  = NULL;
+
+	while (len > 0) {
+		use_len = len;
+		if (use_len > sizeof(int))
+			use_len = sizeof(int);
+
+		rnd = _rand();
+		memcpy(output, &rnd, use_len);
+		output += use_len;
+		len -= use_len;
+	}
+	return 0;
+}
+#endif /* defined(_CFG_CRYPTO_WITH_ACIPHER) ||
+	* defined(_CFG_CRYPTO_WITH_DRBG)
+	*/
+
 /******************************************************************************
  * Message digest functions
  ******************************************************************************/
@@ -187,6 +221,7 @@ TEE_Result crypto_hash_update(void *ctx, uint32_t algo,
 	default:
 		return TEE_ERROR_NOT_SUPPORTED;
 	}
+
 	return TEE_SUCCESS;
 }
 
@@ -783,15 +818,104 @@ void crypto_aes_gcm_final(void *ctx __unused)
 /******************************************************************************
  * Pseudo Random Number Generator
  ******************************************************************************/
-TEE_Result crypto_rng_read(void *buf __unused, size_t blen __unused)
+#if defined(CFG_CRYPTO_CTR_DRBG)
+static TEE_Result ctr_drbg_read(void *buf, size_t blen)
 {
-	return TEE_ERROR_NOT_IMPLEMENTED;
+	TEE_Result res = TEE_SUCCESS;
+	int err;
+	mbedtls_ctr_drbg_context ctr_drbg;
+
+	mbedtls_ctr_drbg_init(&ctr_drbg);
+
+	err = mbedtls_ctr_drbg_seed(&ctr_drbg, mbd_rand, NULL, NULL, 0);
+	if (err != 0) {
+		EMSG("failed\n ! mbedtls_ctr_drbg_seed returned 0x%x\n", -err);
+		res = TEE_ERROR_SECURITY;
+		goto exit;
+	}
+
+	err = mbedtls_ctr_drbg_random(&ctr_drbg, buf, blen);
+	if (err != 0) {
+		EMSG("failed!\n");
+		res = TEE_ERROR_BAD_STATE;
+		goto exit;
+	}
+
+exit:
+	mbedtls_ctr_drbg_free(&ctr_drbg);
+	return res;
+}
+#endif
+
+#if defined(CFG_CRYPTO_HMAC_DRBG)
+static TEE_Result hmac_drbg_read(void *buf, size_t blen)
+{
+	TEE_Result res = TEE_SUCCESS;
+	int err;
+	mbedtls_hmac_drbg_context hmac_drbg;
+	const mbedtls_md_info_t *md_info;
+
+	mbedtls_hmac_drbg_init(&hmac_drbg);
+
+#if defined(MBEDTLS_SHA1_C)
+	md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA1);
+#endif
+#if defined(MBEDTLS_SHA256_C)
+	md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+#endif
+
+	if (md_info == NULL) {
+		EMSG("failed\n ! mbedtls_md_info_from_type return NULL!\n");
+		res = TEE_ERROR_BAD_STATE;
+		goto exit;
+	}
+	err = mbedtls_hmac_drbg_seed(&hmac_drbg, md_info,
+			mbd_rand, NULL, NULL, 0);
+	if (err != 0) {
+		EMSG("failed\n ! mbedtls_hmac_drbg_seed returned 0x%x\n", -err);
+		res = TEE_ERROR_SECURITY;
+		goto exit;
+	}
+
+	err = mbedtls_hmac_drbg_random(&hmac_drbg, buf, blen);
+	if (err != 0) {
+		EMSG("failed!\n");
+		res = TEE_ERROR_BAD_STATE;
+		goto exit;
+	}
+
+exit:
+	mbedtls_hmac_drbg_free(&hmac_drbg);
+	return res;
+}
+#endif
+
+TEE_Result crypto_rng_read(void *buf, size_t blen)
+{
+#if defined(CFG_CRYPTO_CTR_DRBG)
+	return ctr_drbg_read(buf, blen);
+#elif defined(CFG_CRYPTO_HMAC_DRBG)
+	return hmac_drbg_read(buf, blen);
+#endif
 }
 
-TEE_Result crypto_rng_add_entropy(const uint8_t *inbuf __unused,
-				size_t len __unused)
+TEE_Result crypto_rng_add_entropy(const uint8_t *inbuf, size_t len)
 {
-	return TEE_ERROR_NOT_IMPLEMENTED;
+	TEE_Result res = TEE_SUCCESS;
+	int err;
+	mbedtls_entropy_context entropy;
+
+	mbedtls_entropy_init(&entropy);
+
+	err = mbedtls_entropy_update_manual(&entropy, inbuf, len);
+	if (err != 0) {
+		EMSG("entropy updatemanual faile, returned 0x%x\n", -err);
+		res = TEE_ERROR_SECURITY;
+		goto out;
+	}
+out:
+	mbedtls_entropy_free(&entropy);
+	return res;
 }
 
 TEE_Result crypto_init(void)
@@ -818,9 +942,18 @@ TEE_Result hash_sha256_check(const uint8_t *hash,
 }
 #endif
 
-TEE_Result rng_generate(void *buffer __unused, size_t len __unused)
+TEE_Result rng_generate(void *buffer, size_t len)
 {
-	return TEE_ERROR_NOT_IMPLEMENTED;
+#if defined(CFG_WITH_SOFTWARE_PRNG)
+#if defined(CFG_CRYPTO_CTR_DRBG)
+	return ctr_drbg_read(buffer, len);
+#elif defined(CFG_CRYPTO_HMAC_DRBG)
+	return hmac_drbg_read(buffer, len);
+#endif
+#else
+	return get_rng_array(buffer, len);
+#endif
+	return TEE_SUCCESS;
 }
 
 TEE_Result crypto_aes_expand_enc_key(const void *key __unused,

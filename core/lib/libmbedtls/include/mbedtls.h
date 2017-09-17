@@ -18,4 +18,8 @@
 #include "mbedtls_hash.h"
 #endif
 
+#if defined(_CFG_CRYPTO_WITH_DRBG)
+#include "mbedtls_drbg.h"
+#endif
+
 #endif /* LIBMBEDTLS_H */

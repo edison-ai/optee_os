@@ -52,4 +52,25 @@
 #ifdef MBEDTLS_HAVE_TIME_DATE
 #undef MBEDTLS_HAVE_TIME_DATE
 #endif
+
+/**
+ * \def MBEDTLS_TIMING_C
+ *
+ * Disable the semi-portable timing interface.
+ */
+#ifdef MBEDTLS_TIMING_C
+#undef MBEDTLS_TIMING_C
+#endif
+
+/**
+ * \def MBEDTLS_NO_PLATFORM_ENTROPY
+ *
+ * Enable the built-in platform entropy functions.
+ */
+#ifndef MBEDTLS_NO_PLATFORM_ENTROPY
+#define MBEDTLS_NO_PLATFORM_ENTROPY
+#endif
+
+#define MBEDTLS_PLATFORM_PRINTF_MACRO	(void)
+
 #endif /* MBEDTLS_FEATURE_CONFIG_H */
