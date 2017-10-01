@@ -39,3 +39,7 @@ ifeq ($(CFG_CRYPTO_AES),n)
 srcs-y += mbedtls/library/aes.c
 endif
 endif
+
+# MAC
+srcs-$(CFG_CRYPTO_HMAC) += mbedtls/library/md.c \
+                         mbedtls/library/md_wrap.c
