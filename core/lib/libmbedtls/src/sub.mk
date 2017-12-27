@@ -28,6 +28,9 @@ srcs-$(CFG_CRYPTO_GCM) += mbedtls/library/gcm.c
 srcs-$(_CFG_CRYPTO_WITH_CIPHER) += mbedtls/library/cipher.c \
 			mbedtls/library/cipher_wrap.c
 
+#MAC
+srcs-$(CFG_CRYPTO_CMAC) += mbedtls/library/cmac.c
+
 # DRBG
 ifneq ($(CFG_CRYPTO_CTR_DRBG)_$(CFG_CRYPTO_HMAC_DRBG),n_n)
 srcs-y += mbedtls/library/entropy.c

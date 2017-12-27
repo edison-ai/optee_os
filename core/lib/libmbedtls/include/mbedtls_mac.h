@@ -18,4 +18,8 @@
 #include "mbedtls/md.h"
 #endif
 
+#if defined(CFG_CRYPTO_CMAC)
+#include "mbedtls/cmac.h"
+#endif
+
 #endif /* MBEDTLS_MAC_H */
