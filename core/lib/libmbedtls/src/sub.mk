@@ -16,7 +16,17 @@ ifneq ($(CFG_CRYPTO_SHA384)_$(CFG_CRYPTO_SHA512),n_n)
 srcs-y += mbedtls/library/sha512.c
 endif
 
+# Cipher
 srcs-$(CFG_CRYPTO_AES) += mbedtls/library/aes.c
+srcs-$(CFG_CRYPTO_GCM) += mbedtls/library/aesni.c
+srcs-$(CFG_CRYPTO_GCM) += mbedtls/library/arc4.c
+srcs-$(CFG_CRYPTO_GCM) += mbedtls/library/blowfish.c
+srcs-$(CFG_CRYPTO_CCM) += mbedtls/library/ccm.c
+srcs-$(CFG_CRYPTO_GCM) += mbedtls/library/camellia.c
+srcs-$(CFG_CRYPTO_DES) += mbedtls/library/des.c
+srcs-$(CFG_CRYPTO_GCM) += mbedtls/library/gcm.c
+srcs-$(_CFG_CRYPTO_WITH_CIPHER) += mbedtls/library/cipher.c \
+			mbedtls/library/cipher_wrap.c
 
 # DRBG
 ifneq ($(CFG_CRYPTO_CTR_DRBG)_$(CFG_CRYPTO_HMAC_DRBG),n_n)
