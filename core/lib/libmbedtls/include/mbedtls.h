@@ -34,4 +34,8 @@
 #include "mbedtls_acipher.h"
 #endif
 
+#if defined(_CFG_CRYPTO_WITH_AUTHENC)
+#include "mbedtls_authenc.h"
+#endif
+
 #endif /* LIBMBEDTLS_H */
